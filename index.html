@@ -172,6 +172,8 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
 
         .register-btn {
@@ -200,6 +202,28 @@
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
+        }
+
+        /* Indicador visual de procesamiento en el botón */
+        .submit-btn.processing {
+            background: #95a5a6 !important;
+            color: #fff !important;
+            cursor: not-allowed !important;
+            pointer-events: none;
+        }
+
+        .submit-btn.processing::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid transparent;
+            border-top: 2px solid #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
 
         .loading {
@@ -466,6 +490,19 @@
 
         let videoEnded = false;
         let isFullscreen = false;
+        
+        // Variables para prevenir duplicados
+        let isSubmitting = false;
+        let submissionAttempts = 0;
+        let maxAttempts = 3;
+        let lastSubmissionTime = 0;
+        let submissionTimeout = null;
+        let submissionId = null; // Para rastrear la submisión actual
+
+        // Función para generar un ID único para cada intento de submisión
+        function generateSubmissionId() {
+            return Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
 
         // Función para entrar en pantalla completa
         function enterFullscreen() {
@@ -505,7 +542,8 @@
             
             messageContainer.classList.add('show');
             
-            shareBtn.disabled = false;
+            // Resetear el estado del botón
+            resetSubmissionState();
         }
 
         function closeMessage() {
@@ -515,14 +553,108 @@
             }, 300);
         }
 
+        // Función para resetear el estado de envío
+        function resetSubmissionState() {
+            isSubmitting = false;
+            submissionAttempts = 0;
+            submissionId = null;
+            shareBtn.disabled = false;
+            shareBtn.classList.remove('processing');
+            shareBtn.textContent = 'Compartir';
+            
+            if (submissionTimeout) {
+                clearTimeout(submissionTimeout);
+                submissionTimeout = null;
+            }
+        }
+
+        // Función para verificar si ya existe un registro reciente con la misma respuesta
+        async function checkDuplicateSubmission(respuesta) {
+            try {
+                const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+                
+                const { data, error } = await supabasePublicCliente
+                    .from("campaña")
+                    .select("id")
+                    .eq("respuesta", respuesta)
+                    .limit(1);
+                
+                if (error) throw error;
+                
+                return data && data.length > 0;
+            } catch (error) {
+                console.warn("No se pudo verificar duplicados:", error);
+                return false; // En caso de error, permitir el envío
+            }
+        }
+
         async function submitForm(isShare = false) {
+            const currentTime = Date.now();
             const respuesta = document.getElementById('response').value.trim();
 
+            // Verificaciones de seguridad
+            if (isSubmitting) {
+                console.log("Ya se está procesando una submisión");
+                return;
+            }
+
+            // Prevenir múltiples clicks rápidos (debounce de 2 segundos)
+            if (currentTime - lastSubmissionTime < 2000) {
+                console.log("Intento muy rápido, ignorando");
+                return;
+            }
+
+            // Limitar intentos por sesión
+            if (submissionAttempts >= maxAttempts) {
+                showMessage(
+                    'warning',
+                    '⚠️ Demasiados Intentos',
+                    'Has excedido el número máximo de intentos permitidos.<br><br>Por favor, recarga la página si necesitas intentar nuevamente.'
+                );
+                return;
+            }
+
+            // Marcar como procesando
+            isSubmitting = true;
+            lastSubmissionTime = currentTime;
+            submissionAttempts++;
+            submissionId = generateSubmissionId();
+            const currentSubmissionId = submissionId;
+
+            // Actualizar UI del botón
+            shareBtn.disabled = true;
+            shareBtn.classList.add('processing');
+            shareBtn.textContent = 'Procesando...';
+
+            // Mostrar loading
             loading.classList.add('show');
             formContainer.classList.remove('show');
-            shareBtn.disabled = true;
+
+            // Timeout de seguridad (30 segundos)
+            submissionTimeout = setTimeout(() => {
+                if (isSubmitting && submissionId === currentSubmissionId) {
+                    resetSubmissionState();
+                    showMessage(
+                        'error',
+                        '⏰ Tiempo Agotado',
+                        'La operación ha tomado demasiado tiempo.<br><br>Por favor, verifica tu conexión e intenta nuevamente.'
+                    );
+                }
+            }, 30000);
 
             try {
+                // Verificar duplicados recientes
+                const isDuplicate = await checkDuplicateSubmission(respuesta);
+                if (isDuplicate) {
+                    showMessage(
+                        'warning',
+                        '⚠️ Registro Duplicado',
+                        'Parece que ya enviaste esta respuesta recientemente.<br><br>Si crees que esto es un error, por favor intenta con una respuesta diferente.'
+                    );
+                    return;
+                }
+
+                // Verificar límite de registros
                 const { count, error: countError } = await supabasePublicCliente
                     .from("campaña")
                     .select("*", { count: "exact", head: true });
@@ -538,17 +670,54 @@
                     return;
                 }
 
-                const { data: insertData, error: insertError } = await supabasePublicCliente
-                    .from("campaña")
-                    .insert([
-                        {
-                            respuesta: respuesta
-                        }
-                    ])
-                    .select("id")
-                    .single();
+                // Verificar que aún estamos procesando la misma submisión
+                if (submissionId !== currentSubmissionId) {
+                    console.log("Submisión cancelada, se inició otra");
+                    return;
+                }
 
-                if (insertError) throw insertError;
+                // Realizar la inserción con reintentos
+                let insertSuccess = false;
+                let insertData = null;
+                let retryCount = 0;
+                const maxRetries = 2;
+
+                while (!insertSuccess && retryCount <= maxRetries && submissionId === currentSubmissionId) {
+                    try {
+                        const { data, error } = await supabasePublicCliente
+                            .from("campaña")
+                            .insert([
+                                {
+                                    respuesta: respuesta
+                                }
+                            ])
+                            .select("id")
+                            .single();
+
+                        if (error) throw error;
+                        
+                        insertData = data;
+                        insertSuccess = true;
+                    } catch (error) {
+                        retryCount++;
+                        if (retryCount <= maxRetries) {
+                            console.log(`Intento ${retryCount} falló, reintentando...`);
+                            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // Espera incremental
+                        } else {
+                            throw error;
+                        }
+                    }
+                }
+
+                if (!insertSuccess || !insertData) {
+                    throw new Error("No se pudo completar la inserción después de varios intentos");
+                }
+
+                // Verificar que seguimos procesando la misma submisión
+                if (submissionId !== currentSubmissionId) {
+                    console.log("Submisión completada pero cancelada por nueva solicitud");
+                    return;
+                }
 
                 const insertedId = insertData.id;
 
@@ -601,17 +770,28 @@
                     showMessage('success', '✅ Registro Exitoso', successContent);
                 }
 
+                // Programar reset después de 10 minutos
                 setTimeout(() => {
                     resetApplication();
                 }, 600000);
 
             } catch (err) {
-                console.error("Error:", err);
-                showMessage(
-                    'error',
-                    '❌ Error de Sistema',
-                    'Hubo un problema al procesar tu respuesta.<br><br>Por favor, inténtalo nuevamente en unos momentos.<br><br>Si el problema persiste, contacta al administrador.'
-                );
+                console.error("Error en submitForm:", err);
+                
+                // Verificar si es un error de duplicado específico de Supabase
+                if (err.message && err.message.includes('duplicate') || err.code === '23505') {
+                    showMessage(
+                        'warning',
+                        '⚠️ Registro Duplicado',
+                        'Esta respuesta ya fue registrada anteriormente.<br><br>Por favor, intenta con una respuesta diferente.'
+                    );
+                } else {
+                    showMessage(
+                        'error',
+                        '❌ Error de Sistema',
+                        'Hubo un problema al procesar tu respuesta.<br><br>Por favor, inténtalo nuevamente en unos momentos.<br><br>Si el problema persiste, contacta al administrador.'
+                    );
+                }
             }
         }
 
@@ -683,10 +863,25 @@
         }
 
         function setupFormEvents() {
-            shareBtn.addEventListener('click', async function() {
+            // Event listener con protección adicional
+            shareBtn.addEventListener('click', async function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                
+                // Verificación adicional de estado
+                if (isSubmitting || shareBtn.disabled || shareBtn.classList.contains('processing')) {
+                    console.log("Botón deshabilitado o procesando");
+                    return;
+                }
+
                 if (validateForm()) {
                     await submitForm(true); // true = compartir con premio
                 }
+            });
+
+            // Prevenir envío del formulario con Enter
+            responseForm.addEventListener('submit', function(event) {
+                event.preventDefault();
             });
 
             document.getElementById('response').addEventListener('blur', validateResponse);
@@ -738,7 +933,9 @@
             formContainer.style.display = 'none';
             messageContainer.classList.remove('show');
             loading.classList.remove('show');
-            shareBtn.disabled = false;
+            
+            // Resetear completamente el estado de envío
+            resetSubmissionState();
 
             document.querySelectorAll('.error-message').forEach(error => {
                 error.style.display = 'none';
@@ -756,6 +953,31 @@
                 console.error("Error al copiar el enlace:", err);
             });
         }
+
+        // Prevenir el botón de retroceso del navegador durante el envío
+        window.addEventListener('beforeunload', function(event) {
+            if (isSubmitting) {
+                event.preventDefault();
+                event.returnValue = 'Se está procesando tu respuesta. ¿Estás seguro de que quieres salir?';
+                return event.returnValue;
+            }
+        });
+
+        // Limpiar timeouts al cerrar la página
+        window.addEventListener('unload', function() {
+            if (submissionTimeout) {
+                clearTimeout(submissionTimeout);
+            }
+        });
+
+        // Event listener global para detectar múltiples clicks
+        document.addEventListener('click', function(event) {
+            if (event.target === shareBtn && (isSubmitting || shareBtn.disabled)) {
+                event.preventDefault();
+                event.stopPropagation();
+                console.log("Click bloqueado - botón ocupado");
+            }
+        }, true);
     </script>
 </body>
 </html>

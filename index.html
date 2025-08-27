@@ -198,6 +198,17 @@
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
         }
 
+        #videoPlayer::-webkit-media-controls {
+            display: none !important;
+        }
+        #videoPlayer::-moz-media-controls {
+            display: none !important;
+        }
+        #videoPlayer::-ms-media-controls {
+            display: none !important;
+        }
+
+
         .submit-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
@@ -421,7 +432,7 @@
     <div class="container">
         <!-- Contenedor del Video -->
         <div class="video-container">
-            <video id="videoPlayer" controls>
+            <video id="videoPlayer" playsinline disablepictureinpicture controlslist="nodownload noremoteplayback noplaybackrate nofullscreen">
                 <source src="EDUCACIÓN VIAL.mp4" type="video/mp4">
                 Tu navegador no soporta el elemento video.
             </video>

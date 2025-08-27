@@ -486,6 +486,18 @@
             }
         });
 
+        const fpPromise = import('https://fpjscdn.net/v3/2aULoGJYHr4tjxuX0rjt')
+        .then(FingerprintJS => FingerprintJS.load({ region: "us" }));
+
+        let visitanteId = null;
+        let solicitudId = null;
+
+    // Obtener el ID único
+        fpPromise.then(fp => fp.get()).then(result => {
+            visitanteId = result.visitorId;
+            solicitudId = result.requestId;
+        });
+
         const videoPlayer = document.getElementById('videoPlayer');
         const videoOverlay = document.getElementById('videoOverlay');
         const playButton = document.getElementById('playButton');
@@ -587,7 +599,7 @@
                 const { data, error } = await supabasePublicCliente
                     .from("campaña")
                     .select("id")
-                    .eq("respuesta", respuesta)
+                    .eq("visitanteId", visitanteId)
                     .limit(1);
                 
                 if (error) throw error;
@@ -699,7 +711,8 @@
                             .from("campaña")
                             .insert([
                                 {
-                                    respuesta: respuesta
+                                    respuesta: respuesta,
+                                    visitanteId: visitanteId,
                                 }
                             ])
                             .select("id")

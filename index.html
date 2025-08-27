@@ -595,6 +595,10 @@
         async function checkDuplicateSubmission(respuesta) {
             try {
                 const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+
+                if (visitanteId === nulll) {
+                    return false; // No se puede verificar sin visitanteId
+                }
                 
                 const { data, error } = await supabasePublicCliente
                     .from("campaña")
@@ -704,6 +708,10 @@
                 let insertData = null;
                 let retryCount = 0;
                 const maxRetries = 2;
+
+                if (visitanteId === nulll) {
+                    return false; // No se puede verificar sin visitanteId
+                }
 
                 while (!insertSuccess && retryCount <= maxRetries && submissionId === currentSubmissionId) {
                     try {

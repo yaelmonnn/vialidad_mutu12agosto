@@ -705,9 +705,6 @@
                 let retryCount = 0;
                 const maxRetries = 2;
 
-                if (visitanteId === nulll) {
-                    return false; // No se puede verificar sin visitanteId
-                }
 
                 while (!insertSuccess && retryCount <= maxRetries && submissionId === currentSubmissionId) {
                     try {

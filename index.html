@@ -595,10 +595,6 @@
         async function checkDuplicateSubmission(respuesta) {
             try {
                 const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-
-                if (visitanteId === nulll) {
-                    return false; // No se puede verificar sin visitanteId
-                }
                 
                 const { data, error } = await supabasePublicCliente
                     .from("campaña")

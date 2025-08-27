@@ -833,6 +833,12 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            const responseField = document.getElementById("response");
+
+    // Evita que se escriban números
+            responseField.addEventListener("input", function () {
+                this.value = this.value.replace(/[0-9]/g, ""); 
+            });
             setupVideoEvents();
             setupFormEvents();
             setupFullscreenEvents();

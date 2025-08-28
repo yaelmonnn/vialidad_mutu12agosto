@@ -1,763 +1,817 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Educación Vial - Formulario</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
+      body {
+        font-family: "Arial", sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
 
+      .container {
+        width: 100%;
+        max-width: 800px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        position: relative;
+      }
+
+      .video-container {
+        position: relative;
+        width: 100%;
+        background: #000;
+      }
+
+      #videoPlayer {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      .video-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: opacity 0.3s ease;
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .video-overlay.show {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .play-button {
+        background: #667eea;
+        color: white;
+        border: none;
+        font-size: 3rem;
+        padding: 20px 30px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      .play-button:hover {
+        background: #5a6fd8;
+        transform: scale(1.1);
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 4px;
+        background: #e1e5e9;
+        position: relative;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: #667eea;
+        transition: width 0.1s ease;
+        width: 0%;
+      }
+
+      .form-container {
+        padding: 40px;
+        display: none;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(20px);
+        transition: all 0.5s ease;
+      }
+
+      .form-container.show {
+        display: block;
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+
+      .form-title {
+        text-align: center;
+        color: #333;
+        margin-bottom: 30px;
+        font-size: 2rem;
+        font-weight: bold;
+      }
+
+      .form-group {
+        margin-bottom: 25px;
+        position: relative;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #555;
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+
+      .form-group textarea {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid #e1e5e9;
+        border-radius: 10px;
+        font-size: 16px;
+        font-family: inherit;
+        resize: vertical;
+        min-height: 120px;
+        transition: border-color 0.3s ease;
+      }
+
+      .form-group textarea:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      .error-message {
+        color: #e74c3c;
+        font-size: 0.9rem;
+        margin-top: 5px;
+        display: none;
+      }
+
+      .buttons-container {
+        display: flex;
+        gap: 15px;
+        margin-top: 10px;
+      }
+
+      .submit-btn {
+        flex: 1;
+        padding: 15px;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .register-btn {
+        background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        color: white;
+        box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+      }
+
+      .register-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(39, 174, 96, 0.4);
+      }
+
+      .share-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+      }
+
+      .share-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+      }
+
+      #videoPlayer::-webkit-media-controls {
+        display: none !important;
+      }
+      #videoPlayer::-moz-media-controls {
+        display: none !important;
+      }
+      #videoPlayer::-ms-media-controls {
+        display: none !important;
+      }
+
+      .submit-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      /* Indicador visual de procesamiento en el botón */
+      .submit-btn.processing {
+        background: #95a5a6 !important;
+        color: #fff !important;
+        cursor: not-allowed !important;
+        pointer-events: none;
+      }
+
+      .submit-btn.processing::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 20px;
+        height: 20px;
+        margin: -10px 0 0 -10px;
+        border: 2px solid transparent;
+        border-top: 2px solid #fff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      .loading {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .loading.show {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .message-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        padding: 20px;
+      }
+
+      .message-container.show {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .message-box {
+        background: white;
+        padding: 20px;
+        border-radius: 20px;
+        max-width: 500px;
+        width: 100%;
+        text-align: center;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        transform: scale(0.8);
+        transition: transform 0.3s ease;
+      }
+
+      .message-container.show .message-box {
+        transform: scale(1);
+      }
+
+      .message-box.success {
+        border-top: 5px solid #27ae60;
+      }
+
+      .message-box.error {
+        border-top: 5px solid #e74c3c;
+      }
+
+      .message-box.warning {
+        border-top: 5px solid #f39c12;
+      }
+
+      .message-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: #333;
+      }
+
+      .message-content {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 25px;
+      }
+
+      .close-btn {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background 0.3s ease;
+      }
+
+      .close-btn:hover {
+        background: #5a6fd8;
+      }
+
+      .registration-id {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        font-family: monospace;
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #333;
+        border: 2px solid #e9ecef;
+      }
+
+      .location-info {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        text-align: left;
+      }
+
+      .location-info h4 {
+        color: #333;
+        margin-bottom: 10px;
+        font-size: 1.1rem;
+      }
+
+      .location-info p {
+        margin-bottom: 5px;
+        color: #555;
+      }
+
+      .schedule-list {
+        list-style: none;
+        padding: 0;
+        margin: 10px 0;
+      }
+
+      .schedule-list li {
+        padding: 5px 0;
+        color: #555;
+        border-bottom: 1px solid #e9ecef;
+      }
+
+      .schedule-list li:last-child {
+        border-bottom: none;
+      }
+
+      @media (max-width: 768px) {
         .container {
-            width: 100%;
-            max-width: 800px;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-            position: relative;
-        }
-
-        .video-container {
-            position: relative;
-            width: 100%;
-            background: #000;
-        }
-
-        #videoPlayer {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        .video-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: opacity 0.3s ease;
-            opacity: 0;
-            visibility: hidden;
-        }
-
-        .video-overlay.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .play-button {
-            background: #667eea;
-            color: white;
-            border: none;
-            font-size: 3rem;
-            padding: 20px 30px;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-
-        .play-button:hover {
-            background: #5a6fd8;
-            transform: scale(1.1);
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 4px;
-            background: #e1e5e9;
-            position: relative;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: #667eea;
-            transition: width 0.1s ease;
-            width: 0%;
+          margin: 10px;
+          border-radius: 15px;
         }
 
         .form-container {
-            padding: 40px;
-            display: none;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(20px);
-            transition: all 0.5s ease;
-        }
-
-        .form-container.show {
-            display: block;
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
+          padding: 20px;
         }
 
         .form-title {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 2rem;
-            font-weight: bold;
+          font-size: 1.5rem;
         }
 
-        .form-group {
-            margin-bottom: 25px;
-            position: relative;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        .form-group textarea {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e1e5e9;
-            border-radius: 10px;
-            font-size: 16px;
-            font-family: inherit;
-            resize: vertical;
-            min-height: 120px;
-            transition: border-color 0.3s ease;
-        }
-
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .error-message {
-            color: #e74c3c;
-            font-size: 0.9rem;
-            margin-top: 5px;
-            display: none;
+        .play-button {
+          font-size: 2rem;
+          padding: 15px 20px;
         }
 
         .buttons-container {
-            display: flex;
-            gap: 15px;
-            margin-top: 10px;
+          flex-direction: column;
+          gap: 10px;
         }
 
         .submit-btn {
-            flex: 1;
-            padding: 15px;
-            border: none;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
+          width: 100%;
         }
-
-        .register-btn {
-            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
-            color: white;
-            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
-        }
-
-        .register-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(39, 174, 96, 0.4);
-        }
-
-        .share-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .share-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-        }
-
-        #videoPlayer::-webkit-media-controls {
-            display: none !important;
-        }
-        #videoPlayer::-moz-media-controls {
-            display: none !important;
-        }
-        #videoPlayer::-ms-media-controls {
-            display: none !important;
-        }
-
-
-        .submit-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* Indicador visual de procesamiento en el botón */
-        .submit-btn.processing {
-            background: #95a5a6 !important;
-            color: #fff !important;
-            cursor: not-allowed !important;
-            pointer-events: none;
-        }
-
-        .submit-btn.processing::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 20px;
-            height: 20px;
-            margin: -10px 0 0 -10px;
-            border: 2px solid transparent;
-            border-top: 2px solid #fff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        .loading {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255,255,255,0.95);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .loading.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .message-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-            padding: 20px;
-        }
-
-        .message-container.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .message-box {
-            background: white;
-            padding: 20px;
-            border-radius: 20px;
-            max-width: 500px;
-            width: 100%;
-            text-align: center;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            transform: scale(0.8);
-            transition: transform 0.3s ease;
-        }
-
-        .message-container.show .message-box {
-            transform: scale(1);
-        }
-
-        .message-box.success {
-            border-top: 5px solid #27ae60;
-        }
-
-        .message-box.error {
-            border-top: 5px solid #e74c3c;
-        }
-
-        .message-box.warning {
-            border-top: 5px solid #f39c12;
-        }
-
-        .message-title {
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #333;
-        }
-
-        .message-content {
-            color: #666;
-            line-height: 1.6;
-            margin-bottom: 25px;
-        }
-
-        .close-btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: background 0.3s ease;
-        }
-
-        .close-btn:hover {
-            background: #5a6fd8;
-        }
-
-        .registration-id {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-family: monospace;
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #333;
-            border: 2px solid #e9ecef;
-        }
-
-        .location-info {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-            text-align: left;
-        }
-
-        .location-info h4 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 1.1rem;
-        }
-
-        .location-info p {
-            margin-bottom: 5px;
-            color: #555;
-        }
-
-        .schedule-list {
-            list-style: none;
-            padding: 0;
-            margin: 10px 0;
-        }
-
-        .schedule-list li {
-            padding: 5px 0;
-            color: #555;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .schedule-list li:last-child {
-            border-bottom: none;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                margin: 10px;
-                border-radius: 15px;
-            }
-            
-            .form-container {
-                padding: 20px;
-            }
-            
-            .form-title {
-                font-size: 1.5rem;
-            }
-            
-            .play-button {
-                font-size: 2rem;
-                padding: 15px 20px;
-            }
-
-            .buttons-container {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .submit-btn {
-                width: 100%;
-            }
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <!-- Contenedor del Video -->
-        <div class="video-container">
-            <video id="videoPlayer" playsinline disablepictureinpicture controlslist="nodownload noremoteplayback noplaybackrate nofullscreen">
-                <source src="EDUCACIÓN VIAL.mp4" type="video/mp4">
-                Tu navegador no soporta el elemento video.
-            </video>
-            <div class="video-overlay show" id="videoOverlay">
-                <button class="play-button" id="playButton">▶</button>
+      <!-- Contenedor del Video -->
+      <div class="video-container">
+        <video
+          id="videoPlayer"
+          playsinline
+          disablepictureinpicture
+          controlslist="nodownload noremoteplayback noplaybackrate nofullscreen"
+        >
+          <source src="EDUCACIÓN VIAL.mp4" type="video/mp4" />
+          Tu navegador no soporta el elemento video.
+        </video>
+        <div class="video-overlay show" id="videoOverlay">
+          <button class="play-button" id="playButton">▶</button>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+
+      <div class="form-container" id="formContainer">
+        <h2 class="form-title">
+          ¡Comparte tu opinión! (Limitado a 250 Participantes)
+        </h2>
+        <form id="responseForm">
+          <div class="form-group">
+            <label for="response"
+              >¿Qué te pareció más interesante del video? *</label
+            >
+            <textarea
+              id="response"
+              name="response"
+              placeholder="Comparte tu opinión sobre el contenido del video..."
+              required
+            ></textarea>
+            <div class="error-message" id="responseError">
+              Por favor comparte tu opinión
             </div>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
-        </div>
+          </div>
 
-        <div class="form-container" id="formContainer">
-            <h2 class="form-title">¡Comparte tu opinión! (Limitado a 250 Participantes)</h2>
-            <form id="responseForm">
-                <div class="form-group">
-                    <label for="response">¿Qué te pareció más interesante del video? *</label>
-                    <textarea id="response" name="response" placeholder="Comparte tu opinión sobre el contenido del video..." required></textarea>
-                    <div class="error-message" id="responseError">Por favor comparte tu opinión</div>
-                </div>
+          <div class="buttons-container">
+            <button type="button" class="submit-btn share-btn" id="shareBtn">
+              Compartir
+            </button>
+          </div>
+        </form>
+      </div>
 
-                <div class="buttons-container">
-                    <button type="button" class="submit-btn share-btn" id="shareBtn">
-                        Compartir
-                    </button>
-                </div>
-            </form>
-        </div>
+      <!-- Loading -->
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Enviando tu respuesta...</p>
+      </div>
 
-        <!-- Loading -->
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>Enviando tu respuesta...</p>
+      <!-- Contenedor de Mensajes -->
+      <div class="message-container" id="messageContainer">
+        <div class="message-box" id="messageBox">
+          <div class="message-title" id="messageTitle"></div>
+          <div class="message-content" id="messageContent"></div>
+          <button class="close-btn" id="closeBtn" onclick="closeMessage()">
+            Cerrar
+          </button>
         </div>
-
-        <!-- Contenedor de Mensajes -->
-        <div class="message-container" id="messageContainer">
-            <div class="message-box" id="messageBox">
-                <div class="message-title" id="messageTitle"></div>
-                <div class="message-content" id="messageContent"></div>
-                <button class="close-btn" id="closeBtn" onclick="closeMessage()">Cerrar</button>
-            </div>
-        </div>
+      </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.min.js"></script>
 
     <script>
-        const supabasePublicCliente = supabase.createClient("https://pprjmeshlulyddsrgbxb.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwcmptZXNobHVseWRkc3JnYnhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyODQ3MzAsImV4cCI6MjA2NTg2MDczMH0.ZGXN-O378bnHeLACbTZ6ARLKSfMdaqFw0fwEl1Adxn0", {
-            db: {
-                schema: "public"
-            }
+      const supabasePublicCliente = supabase.createClient(
+        "https://pprjmeshlulyddsrgbxb.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwcmptZXNobHVseWRkc3JnYnhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyODQ3MzAsImV4cCI6MjA2NTg2MDczMH0.ZGXN-O378bnHeLACbTZ6ARLKSfMdaqFw0fwEl1Adxn0",
+        {
+          db: {
+            schema: "public",
+          },
+        }
+      );
+
+      const fpPromise = import(
+        "https://fpjscdn.net/v3/2aULoGJYHr4tjxuX0rjt"
+      ).then((FingerprintJS) => FingerprintJS.load({ region: "us" }));
+
+      let visitanteId = null;
+      let solicitudId = null;
+
+      // Obtener el ID único
+      fpPromise
+        .then((fp) => fp.get())
+        .then((result) => {
+          visitanteId = result.visitorId;
+          solicitudId = result.requestId;
         });
 
-        const fpPromise = import('https://fpjscdn.net/v3/2aULoGJYHr4tjxuX0rjt')
-        .then(FingerprintJS => FingerprintJS.load({ region: "us" }));
+      const videoPlayer = document.getElementById("videoPlayer");
+      const videoOverlay = document.getElementById("videoOverlay");
+      const playButton = document.getElementById("playButton");
+      const formContainer = document.getElementById("formContainer");
+      const responseForm = document.getElementById("responseForm");
+      const loading = document.getElementById("loading");
+      const progressFill = document.getElementById("progressFill");
+      const shareBtn = document.getElementById("shareBtn");
+      const messageContainer = document.getElementById("messageContainer");
+      const messageBox = document.getElementById("messageBox");
+      const messageTitle = document.getElementById("messageTitle");
+      const messageContent = document.getElementById("messageContent");
 
-        let visitanteId = null;
-        let solicitudId = null;
+      let videoEnded = false;
+      let isFullscreen = false;
 
-    // Obtener el ID único
-        fpPromise.then(fp => fp.get()).then(result => {
-            visitanteId = result.visitorId;
-            solicitudId = result.requestId;
-        });
+      // Variables para prevenir duplicados
+      let isSubmitting = false;
+      let submissionAttempts = 0;
+      let maxAttempts = 3;
+      let lastSubmissionTime = 0;
+      let submissionTimeout = null;
+      let submissionId = null; // Para rastrear la submisión actual
 
-        const videoPlayer = document.getElementById('videoPlayer');
-        const videoOverlay = document.getElementById('videoOverlay');
-        const playButton = document.getElementById('playButton');
-        const formContainer = document.getElementById('formContainer');
-        const responseForm = document.getElementById('responseForm');
-        const loading = document.getElementById('loading');
-        const progressFill = document.getElementById('progressFill');
-        const shareBtn = document.getElementById('shareBtn');
-        const messageContainer = document.getElementById('messageContainer');
-        const messageBox = document.getElementById('messageBox');
-        const messageTitle = document.getElementById('messageTitle');
-        const messageContent = document.getElementById('messageContent');
+      // Función para generar un ID único para cada intento de submisión
+      function generateSubmissionId() {
+        return Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+      }
 
-        let videoEnded = false;
-        let isFullscreen = false;
-        
-        // Variables para prevenir duplicados
-        let isSubmitting = false;
-        let submissionAttempts = 0;
-        let maxAttempts = 3;
-        let lastSubmissionTime = 0;
-        let submissionTimeout = null;
-        let submissionId = null; // Para rastrear la submisión actual
+      // Función para entrar en pantalla completa
+      function enterFullscreen() {
+        if (videoPlayer.requestFullscreen) {
+          videoPlayer.requestFullscreen();
+        } else if (videoPlayer.webkitRequestFullscreen) {
+          videoPlayer.webkitRequestFullscreen();
+        } else if (videoPlayer.msRequestFullscreen) {
+          videoPlayer.msRequestFullscreen();
+        }
+      }
 
-        // Función para generar un ID único para cada intento de submisión
-        function generateSubmissionId() {
-            return Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      // Función para salir de pantalla completa
+      function exitFullscreen() {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
+      }
+
+      // Detectar cambios en el estado de pantalla completa
+      function onFullscreenChange() {
+        isFullscreen = !!(
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.msFullscreenElement
+        );
+      }
+
+      function showMessage(type, title, content) {
+        loading.classList.remove("show");
+        formContainer.classList.remove("show");
+
+        messageTitle.textContent = title;
+        messageContent.innerHTML = content;
+
+        messageBox.className = `message-box ${type}`;
+
+        messageContainer.classList.add("show");
+
+        // Resetear el estado del botón
+        resetSubmissionState();
+      }
+
+      function closeMessage() {
+        messageContainer.classList.remove("show");
+        setTimeout(() => {
+          formContainer.classList.add("show");
+        }, 300);
+      }
+
+      // Función para resetear el estado de envío
+      function resetSubmissionState() {
+        isSubmitting = false;
+        submissionAttempts = 0;
+        submissionId = null;
+        shareBtn.disabled = false;
+        shareBtn.classList.remove("processing");
+        shareBtn.textContent = "Compartir";
+
+        if (submissionTimeout) {
+          clearTimeout(submissionTimeout);
+          submissionTimeout = null;
+        }
+      }
+
+      // Función para verificar si ya existe un registro reciente con la misma respuesta
+      async function checkDuplicateSubmission(respuesta) {
+        try {
+          const fiveMinutesAgo = new Date(
+            Date.now() - 5 * 60 * 1000
+          ).toISOString();
+
+          const { data, error } = await supabasePublicCliente
+            .from("campaña")
+            .select("id")
+            .or(`visitanteId.eq.${visitanteId},respuesta.eq.${respuesta}`)
+            .limit(1);
+
+          if (error) throw error;
+
+          return data && data.length > 0;
+        } catch (error) {
+          console.warn("No se pudo verificar duplicados:", error);
+          return false; // En caso de error, permitir el envío
+        }
+      }
+
+      async function submitForm(isShare = false) {
+        const currentTime = Date.now();
+        const respuesta = document.getElementById("response").value.trim();
+
+        // Verificaciones de seguridad
+        if (isSubmitting) {
+          console.log("Ya se está procesando una submisión");
+          return;
         }
 
-        // Función para entrar en pantalla completa
-        function enterFullscreen() {
-            if (videoPlayer.requestFullscreen) {
-                videoPlayer.requestFullscreen();
-            } else if (videoPlayer.webkitRequestFullscreen) {
-                videoPlayer.webkitRequestFullscreen();
-            } else if (videoPlayer.msRequestFullscreen) {
-                videoPlayer.msRequestFullscreen();
-            }
+        // Prevenir múltiples clicks rápidos (debounce de 2 segundos)
+        if (currentTime - lastSubmissionTime < 2000) {
+          console.log("Intento muy rápido, ignorando");
+          return;
         }
 
-        // Función para salir de pantalla completa
-        function exitFullscreen() {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) {
-                document.webkitExitFullscreen();
-            } else if (document.msExitFullscreen) {
-                document.msExitFullscreen();
-            }
+        // Limitar intentos por sesión
+        if (submissionAttempts >= maxAttempts) {
+          showMessage(
+            "warning",
+            "⚠️ Demasiados Intentos",
+            "Has excedido el número máximo de intentos permitidos.<br><br>Por favor, recarga la página si necesitas intentar nuevamente."
+          );
+          return;
         }
 
-        // Detectar cambios en el estado de pantalla completa
-        function onFullscreenChange() {
-            isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
-        }
+        // Marcar como procesando
+        isSubmitting = true;
+        lastSubmissionTime = currentTime;
+        submissionAttempts++;
+        submissionId = generateSubmissionId();
+        const currentSubmissionId = submissionId;
 
-        function showMessage(type, title, content) {
-            loading.classList.remove('show');
-            formContainer.classList.remove('show');
-            
-            messageTitle.textContent = title;
-            messageContent.innerHTML = content;
-            
-            messageBox.className = `message-box ${type}`;
-            
-            messageContainer.classList.add('show');
-            
-            // Resetear el estado del botón
+        // Actualizar UI del botón
+        shareBtn.disabled = true;
+        shareBtn.classList.add("processing");
+        shareBtn.textContent = "Procesando...";
+
+        // Mostrar loading
+        loading.classList.add("show");
+        formContainer.classList.remove("show");
+
+        // Timeout de seguridad (30 segundos)
+        submissionTimeout = setTimeout(() => {
+          if (isSubmitting && submissionId === currentSubmissionId) {
             resetSubmissionState();
-        }
+            showMessage(
+              "error",
+              "⏰ Tiempo Agotado",
+              "La operación ha tomado demasiado tiempo.<br><br>Por favor, verifica tu conexión e intenta nuevamente."
+            );
+          }
+        }, 30000);
 
-        function closeMessage() {
-            messageContainer.classList.remove('show');
-            setTimeout(() => {
-                formContainer.classList.add('show');
-            }, 300);
-        }
+        try {
+          // Verificar duplicados recientes
+          const isDuplicate = await checkDuplicateSubmission(respuesta);
+          if (isDuplicate) {
+            showMessage(
+              "warning",
+              "⚠️ Registro Duplicado",
+              "Parece que ya enviaste esta respuesta recientemente.<br><br>Si crees que esto es un error, por favor intenta con una respuesta diferente."
+            );
+            return;
+          }
 
-        // Función para resetear el estado de envío
-        function resetSubmissionState() {
-            isSubmitting = false;
-            submissionAttempts = 0;
-            submissionId = null;
-            shareBtn.disabled = false;
-            shareBtn.classList.remove('processing');
-            shareBtn.textContent = 'Compartir';
-            
-            if (submissionTimeout) {
-                clearTimeout(submissionTimeout);
-                submissionTimeout = null;
-            }
-        }
+          // Verificar límite de registros
+          const { count, error: countError } = await supabasePublicCliente
+            .from("campaña")
+            .select("*", { count: "exact", head: true });
 
-        // Función para verificar si ya existe un registro reciente con la misma respuesta
-        async function checkDuplicateSubmission(respuesta) {
+          if (countError) throw countError;
+
+          if (count >= 250) {
+            showMessage(
+              "error",
+              "🚫 Límite Alcanzado",
+              "El límite de 250 registros ha sido alcanzado.<br><br>Ya no se pueden registrar más participantes en esta campaña.<br><br>¡Gracias por tu interés!"
+            );
+            return;
+          }
+
+          // Verificar que aún estamos procesando la misma submisión
+          if (submissionId !== currentSubmissionId) {
+            console.log("Submisión cancelada, se inició otra");
+            return;
+          }
+
+          if (!visitanteId) {
+            showMessage(
+              "error",
+              "❌ Error de Identificación",
+              "No se pudo generar tu identificador único.<br><br>Por favor, recarga la página e inténtalo nuevamente."
+            );
+            return;
+          }
+
+          // Realizar la inserción con reintentos
+          let insertSuccess = false;
+          let insertData = null;
+          let retryCount = 0;
+          const maxRetries = 2;
+
+          while (
+            !insertSuccess &&
+            retryCount <= maxRetries &&
+            submissionId === currentSubmissionId
+          ) {
             try {
-                const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-                
-                const { data, error } = await supabasePublicCliente
-                    .from("campaña")
-                    .select("id")
-                    .eq("visitanteId", visitanteId)
-                    .eq("respuesta", respuesta)
-                    .limit(1);
-                
-                if (error) throw error;
-                
-                return data && data.length > 0;
+              const { data, error } = await supabasePublicCliente
+                .from("campaña")
+                .insert([
+                  {
+                    respuesta: respuesta,
+                    visitanteId: visitanteId,
+                  },
+                ])
+                .select("id")
+                .single();
+
+              if (error) throw error;
+
+              insertData = data;
+              insertSuccess = true;
             } catch (error) {
-                console.warn("No se pudo verificar duplicados:", error);
-                return false; // En caso de error, permitir el envío
+              retryCount++;
+              if (retryCount <= maxRetries) {
+                console.log(`Intento ${retryCount} falló, reintentando...`);
+                await new Promise((resolve) =>
+                  setTimeout(resolve, 1000 * retryCount)
+                ); // Espera incremental
+              } else {
+                throw error;
+              }
             }
-        }
+          }
 
-        async function submitForm(isShare = false) {
-            const currentTime = Date.now();
-            const respuesta = document.getElementById('response').value.trim();
+          if (!insertSuccess || !insertData) {
+            throw new Error(
+              "No se pudo completar la inserción después de varios intentos"
+            );
+          }
 
-            // Verificaciones de seguridad
-            if (isSubmitting) {
-                console.log("Ya se está procesando una submisión");
-                return;
-            }
+          // Verificar que seguimos procesando la misma submisión
+          if (submissionId !== currentSubmissionId) {
+            console.log(
+              "Submisión completada pero cancelada por nueva solicitud"
+            );
+            return;
+          }
 
-            // Prevenir múltiples clicks rápidos (debounce de 2 segundos)
-            if (currentTime - lastSubmissionTime < 2000) {
-                console.log("Intento muy rápido, ignorando");
-                return;
-            }
+          const insertedId = insertData.id;
 
-            // Limitar intentos por sesión
-            if (submissionAttempts >= maxAttempts) {
-                showMessage(
-                    'warning',
-                    '⚠️ Demasiados Intentos',
-                    'Has excedido el número máximo de intentos permitidos.<br><br>Por favor, recarga la página si necesitas intentar nuevamente.'
-                );
-                return;
-            }
-
-            // Marcar como procesando
-            isSubmitting = true;
-            lastSubmissionTime = currentTime;
-            submissionAttempts++;
-            submissionId = generateSubmissionId();
-            const currentSubmissionId = submissionId;
-
-            // Actualizar UI del botón
-            shareBtn.disabled = true;
-            shareBtn.classList.add('processing');
-            shareBtn.textContent = 'Procesando...';
-
-            // Mostrar loading
-            loading.classList.add('show');
-            formContainer.classList.remove('show');
-
-            // Timeout de seguridad (30 segundos)
-            submissionTimeout = setTimeout(() => {
-                if (isSubmitting && submissionId === currentSubmissionId) {
-                    resetSubmissionState();
-                    showMessage(
-                        'error',
-                        '⏰ Tiempo Agotado',
-                        'La operación ha tomado demasiado tiempo.<br><br>Por favor, verifica tu conexión e intenta nuevamente.'
-                    );
-                }
-            }, 30000);
-
+          if (isShare) {
+            // Copiar el enlace del video al portapapeles
+            const fixedVideoURL = "https://vialidad-mutu12agosto.vercel.app";
             try {
-                // Verificar duplicados recientes
-                const isDuplicate = await checkDuplicateSubmission(respuesta);
-                if (isDuplicate) {
-                    showMessage(
-                        'warning',
-                        '⚠️ Registro Duplicado',
-                        'Parece que ya enviaste esta respuesta recientemente.<br><br>Si crees que esto es un error, por favor intenta con una respuesta diferente.'
-                    );
-                    return;
-                }
+              await navigator.clipboard.writeText(fixedVideoURL);
+            } catch (err) {
+              console.error(
+                "No se pudo copiar el enlace automáticamente:",
+                err
+              );
+            }
 
-                // Verificar límite de registros
-                const { count, error: countError } = await supabasePublicCliente
-                    .from("campaña")
-                    .select("*", { count: "exact", head: true });
-
-                if (countError) throw countError;
-
-                if (count >= 250) {
-                    showMessage(
-                        'error',
-                        '🚫 Límite Alcanzado',
-                        'El límite de 250 registros ha sido alcanzado.<br><br>Ya no se pueden registrar más participantes en esta campaña.<br><br>¡Gracias por tu interés!'
-                    );
-                    return;
-                }
-
-                // Verificar que aún estamos procesando la misma submisión
-                if (submissionId !== currentSubmissionId) {
-                    console.log("Submisión cancelada, se inició otra");
-                    return;
-                }
-
-                // Realizar la inserción con reintentos
-                let insertSuccess = false;
-                let insertData = null;
-                let retryCount = 0;
-                const maxRetries = 2;
-
-
-                while (!insertSuccess && retryCount <= maxRetries && submissionId === currentSubmissionId) {
-                    try {
-                        const { data, error } = await supabasePublicCliente
-                            .from("campaña")
-                            .insert([
-                                {
-                                    respuesta: respuesta,
-                                    visitanteId: visitanteId,
-                                }
-                            ])
-                            .select("id")
-                            .single();
-
-                        if (error) throw error;
-                        
-                        insertData = data;
-                        insertSuccess = true;
-                    } catch (error) {
-                        retryCount++;
-                        if (retryCount <= maxRetries) {
-                            console.log(`Intento ${retryCount} falló, reintentando...`);
-                            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // Espera incremental
-                        } else {
-                            throw error;
-                        }
-                    }
-                }
-
-                if (!insertSuccess || !insertData) {
-                    throw new Error("No se pudo completar la inserción después de varios intentos");
-                }
-
-                // Verificar que seguimos procesando la misma submisión
-                if (submissionId !== currentSubmissionId) {
-                    console.log("Submisión completada pero cancelada por nueva solicitud");
-                    return;
-                }
-
-                const insertedId = insertData.id;
-
-                if (isShare) {
-                    // Copiar el enlace del video al portapapeles
-                    const fixedVideoURL = "https://vialidad-mutu12agosto.vercel.app";
-                    try {
-                        await navigator.clipboard.writeText(fixedVideoURL);
-                    } catch (err) {
-                        console.error("No se pudo copiar el enlace automáticamente:", err);
-                    }
-
-                    // Mensaje completo con información del premio
-                    const successContent = `
+            // Mensaje completo con información del premio
+            const successContent = `
                         <div class="registration-id">
                             ID de Registro: ${insertedId}
                         </div>
@@ -770,12 +824,17 @@
                         </div>
 
                         <div style="margin-top:12px;display:flex;gap:10px;justify-content:center;">
-                            <a href="https://api.whatsapp.com/send?text=${encodeURIComponent('Mira el video, participa y gana un premio por la campaña de vialidad de la Mutualidad 12 de Agosto: ' + fixedVideoURL)}" 
+                            <a href="https://api.whatsapp.com/send?text=${encodeURIComponent(
+                              "Mira el video, participa y gana un premio por la campaña de vialidad de la Mutualidad 12 de Agosto: " +
+                                fixedVideoURL
+                            )}" 
                             target="_blank" 
                             style="padding:6px 12px;background:#25D366;color:#fff;border-radius:6px;text-decoration:none;font-size:0.85rem;">
                             📲 Compartir en WhatsApp
                             </a>
-                            <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(fixedVideoURL)}" 
+                            <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+                              fixedVideoURL
+                            )}" 
                             target="_blank" 
                             style="padding:6px 12px;background:#1877F2;color:#fff;border-radius:6px;text-decoration:none;font-size:0.85rem;">
                             👍 Compartir en Facebook
@@ -795,10 +854,10 @@
                         </div>
                     `;
 
-                    showMessage('success', '🎉 ¡Registro Exitoso!', successContent);
-                } else {
-                    // Mensaje simple de registro exitoso
-                    const successContent = `
+            showMessage("success", "🎉 ¡Registro Exitoso!", successContent);
+          } else {
+            // Mensaje simple de registro exitoso
+            const successContent = `
                         <div class="registration-id">
                             ID de Registro: ${insertedId}
                         </div>
@@ -806,223 +865,245 @@
                         <p>Gracias por participar en nuestra campaña de educación vial.</p>
                     `;
 
-                    showMessage('success', '✅ Registro Exitoso', successContent);
-                }
+            showMessage("success", "✅ Registro Exitoso", successContent);
+          }
 
-                // Programar reset después de 10 minutos
-                setTimeout(() => {
-                    resetApplication();
-                }, 600000);
+          // Programar reset después de 10 minutos
+          setTimeout(() => {
+            resetApplication();
+          }, 600000);
+        } catch (err) {
+          console.error("Error en submitForm:", err);
 
-            } catch (err) {
-                console.error("Error en submitForm:", err);
-                
-                // Verificar si es un error de duplicado específico de Supabase
-                if (err.message && err.message.includes('duplicate') || err.code === '23505') {
-                    showMessage(
-                        'warning',
-                        '⚠️ Registro Duplicado',
-                        'Esta respuesta ya fue registrada anteriormente.<br><br>Por favor, intenta con una respuesta diferente.'
-                    );
-                } else {
-                    showMessage(
-                        'error',
-                        '❌ Error de Sistema',
-                        'Hubo un problema al procesar tu respuesta.<br><br>Por favor, inténtalo nuevamente en unos momentos.<br><br>Si el problema persiste, contacta al administrador.'
-                    );
-                }
-            }
+          // Verificar si es un error de duplicado específico de Supabase
+          if (
+            (err.message && err.message.includes("duplicate")) ||
+            err.code === "23505"
+          ) {
+            showMessage(
+              "warning",
+              "⚠️ Registro Duplicado",
+              "Esta respuesta ya fue registrada anteriormente.<br><br>Por favor, intenta con una respuesta diferente."
+            );
+          } else {
+            showMessage(
+              "error",
+              "❌ Error de Sistema",
+              "Hubo un problema al procesar tu respuesta.<br><br>Por favor, inténtalo nuevamente en unos momentos.<br><br>Si el problema persiste, contacta al administrador."
+            );
+          }
         }
+      }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const responseField = document.getElementById("response");
+      document.addEventListener("DOMContentLoaded", function () {
+        const responseField = document.getElementById("response");
 
-    // Evita que se escriban números
-            responseField.addEventListener("input", function () {
-                this.value = this.value.replace(/[0-9]/g, ""); 
-            });
-            setupVideoEvents();
-            setupFormEvents();
-            setupFullscreenEvents();
+        // Evita que se escriban números
+        responseField.addEventListener("input", function () {
+          this.value = this.value.replace(/[0-9]/g, "");
+        });
+        setupVideoEvents();
+        setupFormEvents();
+        setupFullscreenEvents();
+      });
+
+      function setupFullscreenEvents() {
+        // Escuchar eventos de cambio de pantalla completa
+        document.addEventListener("fullscreenchange", onFullscreenChange);
+        document.addEventListener("webkitfullscreenchange", onFullscreenChange);
+        document.addEventListener("msfullscreenchange", onFullscreenChange);
+      }
+
+      function setupVideoEvents() {
+        playButton.addEventListener("click", function () {
+          if (videoPlayer.paused) {
+            videoPlayer.play();
+            videoOverlay.classList.remove("show");
+
+            // Entrar en pantalla completa cuando se reproduce el video
+            setTimeout(() => {
+              enterFullscreen();
+            }, 100);
+          } else {
+            videoPlayer.pause();
+            videoOverlay.classList.add("show");
+          }
         });
 
-        function setupFullscreenEvents() {
-            // Escuchar eventos de cambio de pantalla completa
-            document.addEventListener('fullscreenchange', onFullscreenChange);
-            document.addEventListener('webkitfullscreenchange', onFullscreenChange);
-            document.addEventListener('msfullscreenchange', onFullscreenChange);
-        }
-
-        function setupVideoEvents() {
-            playButton.addEventListener('click', function() {
-                if (videoPlayer.paused) {
-                    videoPlayer.play();
-                    videoOverlay.classList.remove('show');
-                    
-                    // Entrar en pantalla completa cuando se reproduce el video
-                    setTimeout(() => {
-                        enterFullscreen();
-                    }, 100);
-                } else {
-                    videoPlayer.pause();
-                    videoOverlay.classList.add('show');
-                }
-            });
-
-            videoPlayer.addEventListener('pause', function() {
-                if (!videoEnded) {
-                    videoOverlay.classList.add('show');
-                    playButton.innerHTML = '▶';
-                }
-            });
-
-            videoPlayer.addEventListener('play', function() {
-                videoOverlay.classList.remove('show');
-                playButton.innerHTML = '⏸';
-            });
-
-            videoPlayer.addEventListener('timeupdate', function() {
-                if (videoPlayer.duration) {
-                    const progress = (videoPlayer.currentTime / videoPlayer.duration) * 100;
-                    progressFill.style.width = progress + '%';
-                }
-            });
-
-            videoPlayer.addEventListener('ended', function() {
-                videoEnded = true;
-                videoOverlay.classList.remove('show');
-                
-                // Salir de pantalla completa cuando el video termine
-                if (isFullscreen) {
-                    exitFullscreen();
-                }
-                
-                setTimeout(() => {
-                    formContainer.style.display = 'block';
-                    setTimeout(() => {
-                        formContainer.classList.add('show');
-                        document.getElementById('response').focus();
-                    }, 50);
-                }, 500);
-            });
-        }
-
-        function setupFormEvents() {
-            // Event listener con protección adicional
-            shareBtn.addEventListener('click', async function(event) {
-                event.preventDefault();
-                event.stopPropagation();
-                
-                // Verificación adicional de estado
-                if (isSubmitting || shareBtn.disabled || shareBtn.classList.contains('processing')) {
-                    console.log("Botón deshabilitado o procesando");
-                    return;
-                }
-
-                if (validateForm()) {
-                    await submitForm(true); // true = compartir con premio
-                }
-            });
-
-            // Prevenir envío del formulario con Enter
-            responseForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-            });
-
-            document.getElementById('response').addEventListener('blur', validateResponse);
-        }
-
-        function validateResponse() {
-            const response = document.getElementById('response').value.trim();
-            const errorElement = document.getElementById('responseError');
-            
-            if (response.length < 10) {
-                showError(errorElement, 'Por favor escribe al menos 10 caracteres');
-                return false;
-            }
-            
-            hideError(errorElement);
-            return true;
-        }
-
-        function validateForm() {
-            const responseValid = validateResponse();
-            return responseValid;
-        }
-
-        function showError(element, message) {
-            element.textContent = message;
-            element.style.display = 'block';
-            element.parentElement.querySelector('textarea').style.borderColor = '#e74c3c';
-        }
-
-        function hideError(element) {
-            element.style.display = 'none';
-            element.parentElement.querySelector('textarea').style.borderColor = '#e1e5e9';
-        }
-
-        function resetApplication() {
-            videoPlayer.currentTime = 0;
-            videoEnded = false;
-            progressFill.style.width = '0%';
-            videoOverlay.classList.add('show');
-            playButton.innerHTML = '▶';
-
-            // Asegurar que se salga de pantalla completa
-            if (isFullscreen) {
-                exitFullscreen();
-            }
-
-            responseForm.reset();
-            formContainer.classList.remove('show');
-            formContainer.style.display = 'none';
-            messageContainer.classList.remove('show');
-            loading.classList.remove('show');
-            
-            // Resetear completamente el estado de envío
-            resetSubmissionState();
-
-            document.querySelectorAll('.error-message').forEach(error => {
-                error.style.display = 'none';
-            });
-            document.querySelectorAll('textarea').forEach(input => {
-                input.style.borderColor = '#e1e5e9';
-            });
-        }
-
-        function copyFixedLink() {
-            const text = document.getElementById("videoLinkText").textContent;
-            navigator.clipboard.writeText(text).then(() => {
-                alert("✅ Enlace copiado al portapapeles");
-            }).catch(err => {
-                console.error("Error al copiar el enlace:", err);
-            });
-        }
-
-        // Prevenir el botón de retroceso del navegador durante el envío
-        window.addEventListener('beforeunload', function(event) {
-            if (isSubmitting) {
-                event.preventDefault();
-                event.returnValue = 'Se está procesando tu respuesta. ¿Estás seguro de que quieres salir?';
-                return event.returnValue;
-            }
+        videoPlayer.addEventListener("pause", function () {
+          if (!videoEnded) {
+            videoOverlay.classList.add("show");
+            playButton.innerHTML = "▶";
+          }
         });
 
-        // Limpiar timeouts al cerrar la página
-        window.addEventListener('unload', function() {
-            if (submissionTimeout) {
-                clearTimeout(submissionTimeout);
-            }
+        videoPlayer.addEventListener("play", function () {
+          videoOverlay.classList.remove("show");
+          playButton.innerHTML = "⏸";
         });
 
-        // Event listener global para detectar múltiples clicks
-        document.addEventListener('click', function(event) {
-            if (event.target === shareBtn && (isSubmitting || shareBtn.disabled)) {
-                event.preventDefault();
-                event.stopPropagation();
-                console.log("Click bloqueado - botón ocupado");
-            }
-        }, true);
+        videoPlayer.addEventListener("timeupdate", function () {
+          if (videoPlayer.duration) {
+            const progress =
+              (videoPlayer.currentTime / videoPlayer.duration) * 100;
+            progressFill.style.width = progress + "%";
+          }
+        });
+
+        videoPlayer.addEventListener("ended", function () {
+          videoEnded = true;
+          videoOverlay.classList.remove("show");
+
+          // Salir de pantalla completa cuando el video termine
+          if (isFullscreen) {
+            exitFullscreen();
+          }
+
+          setTimeout(() => {
+            formContainer.style.display = "block";
+            setTimeout(() => {
+              formContainer.classList.add("show");
+              document.getElementById("response").focus();
+            }, 50);
+          }, 500);
+        });
+      }
+
+      function setupFormEvents() {
+        // Event listener con protección adicional
+        shareBtn.addEventListener("click", async function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+
+          // Verificación adicional de estado
+          if (
+            isSubmitting ||
+            shareBtn.disabled ||
+            shareBtn.classList.contains("processing")
+          ) {
+            console.log("Botón deshabilitado o procesando");
+            return;
+          }
+
+          if (validateForm()) {
+            await submitForm(true); // true = compartir con premio
+          }
+        });
+
+        // Prevenir envío del formulario con Enter
+        responseForm.addEventListener("submit", function (event) {
+          event.preventDefault();
+        });
+
+        document
+          .getElementById("response")
+          .addEventListener("blur", validateResponse);
+      }
+
+      function validateResponse() {
+        const response = document.getElementById("response").value.trim();
+        const errorElement = document.getElementById("responseError");
+
+        if (response.length < 10) {
+          showError(errorElement, "Por favor escribe al menos 10 caracteres");
+          return false;
+        }
+
+        hideError(errorElement);
+        return true;
+      }
+
+      function validateForm() {
+        const responseValid = validateResponse();
+        return responseValid;
+      }
+
+      function showError(element, message) {
+        element.textContent = message;
+        element.style.display = "block";
+        element.parentElement.querySelector("textarea").style.borderColor =
+          "#e74c3c";
+      }
+
+      function hideError(element) {
+        element.style.display = "none";
+        element.parentElement.querySelector("textarea").style.borderColor =
+          "#e1e5e9";
+      }
+
+      function resetApplication() {
+        videoPlayer.currentTime = 0;
+        videoEnded = false;
+        progressFill.style.width = "0%";
+        videoOverlay.classList.add("show");
+        playButton.innerHTML = "▶";
+
+        // Asegurar que se salga de pantalla completa
+        if (isFullscreen) {
+          exitFullscreen();
+        }
+
+        responseForm.reset();
+        formContainer.classList.remove("show");
+        formContainer.style.display = "none";
+        messageContainer.classList.remove("show");
+        loading.classList.remove("show");
+
+        // Resetear completamente el estado de envío
+        resetSubmissionState();
+
+        document.querySelectorAll(".error-message").forEach((error) => {
+          error.style.display = "none";
+        });
+        document.querySelectorAll("textarea").forEach((input) => {
+          input.style.borderColor = "#e1e5e9";
+        });
+      }
+
+      function copyFixedLink() {
+        const text = document.getElementById("videoLinkText").textContent;
+        navigator.clipboard
+          .writeText(text)
+          .then(() => {
+            alert("✅ Enlace copiado al portapapeles");
+          })
+          .catch((err) => {
+            console.error("Error al copiar el enlace:", err);
+          });
+      }
+
+      // Prevenir el botón de retroceso del navegador durante el envío
+      window.addEventListener("beforeunload", function (event) {
+        if (isSubmitting) {
+          event.preventDefault();
+          event.returnValue =
+            "Se está procesando tu respuesta. ¿Estás seguro de que quieres salir?";
+          return event.returnValue;
+        }
+      });
+
+      // Limpiar timeouts al cerrar la página
+      window.addEventListener("unload", function () {
+        if (submissionTimeout) {
+          clearTimeout(submissionTimeout);
+        }
+      });
+
+      // Event listener global para detectar múltiples clicks
+      document.addEventListener(
+        "click",
+        function (event) {
+          if (
+            event.target === shareBtn &&
+            (isSubmitting || shareBtn.disabled)
+          ) {
+            event.preventDefault();
+            event.stopPropagation();
+            console.log("Click bloqueado - botón ocupado");
+          }
+        },
+        true
+      );
     </script>
-</body>
+  </body>
 </html>

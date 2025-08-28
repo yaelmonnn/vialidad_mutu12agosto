@@ -600,6 +600,7 @@
                     .from("campaña")
                     .select("id")
                     .eq("visitanteId", visitanteId)
+                    .eq("respuesta", respuesta)
                     .limit(1);
                 
                 if (error) throw error;
